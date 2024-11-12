@@ -5,14 +5,14 @@ import java.io.IOException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import entity.Weather;
+import entity.User;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import use_case.note.DataAccessException;
-import use_case.note.WeatherDataAccessInterface;
+import use_case.note.NoteDataAccessInterface;
 
 /**
  * The DAO for accessing notes stored in the database.
@@ -27,9 +27,8 @@ import use_case.note.WeatherDataAccessInterface;
  * csc207-grade-apis-demo/documentation/fg3zkjm/5-password-protected-user">
  *     the documentation</a>
  * of the API for more details.
- * implements NoteDataAccessInterface
  */
-public class DBNoteDataAccessObject {
+public class DBNoteDataAccessObject implements NoteDataAccessInterface {
     private static final int SUCCESS_CODE = 200;
     private static final int CREDENTIAL_ERROR = 401;
     private static final String CONTENT_TYPE_LABEL = "Content-Type";
@@ -40,18 +39,15 @@ public class DBNoteDataAccessObject {
     private static final String MESSAGE = "message";
 
     @Override
-    public String saveNote(Weather weather, String note) throws DataAccessException {
+    public String saveNote(User user, String note) throws DataAccessException {
         final OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
 
         // POST METHOD
         final MediaType mediaType = MediaType.parse(CONTENT_TYPE_JSON);
         final JSONObject requestBody = new JSONObject();
-        requestBody.put(USERNAME, weather.getCity());
-        requestBody.put(PASSWORD, weather.getLongitude());
-        requestBody.put(USERNAME, weather.getLatitude());
-        requestBody.put(USERNAME, weather.getTemperature());
-        requestBody.put(USERNAME, weather.getLooks());
+        requestBody.put(USERNAME, user.getName());
+        requestBody.put(PASSWORD, user.getPassword());
         final JSONObject extra = new JSONObject();
         extra.put("note", note);
         requestBody.put("info", extra);
@@ -67,7 +63,7 @@ public class DBNoteDataAccessObject {
             final JSONObject responseBody = new JSONObject(response.body().string());
 
             if (responseBody.getInt(STATUS_CODE_LABEL) == SUCCESS_CODE) {
-                return loadNote(weather);
+                return loadNote(user);
             }
             else if (responseBody.getInt(STATUS_CODE_LABEL) == CREDENTIAL_ERROR) {
                 throw new DataAccessException("message could not be found or password was incorrect");
@@ -82,9 +78,9 @@ public class DBNoteDataAccessObject {
     }
 
     @Override
-    public String loadNote(Weather weather) throws DataAccessException {
+    public String loadNote(User user) throws DataAccessException {
         // Make an API call to get the user object.
-        final String username = weather.getCity();
+        final String username = user.getName();
         final OkHttpClient client = new OkHttpClient().newBuilder().build();
         final Request request = new Request.Builder()
                 .url(String.format("http://vm003.teach.cs.toronto.edu:20112/user?username=%s", username))
